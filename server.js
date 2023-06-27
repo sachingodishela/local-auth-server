@@ -1,20 +1,22 @@
-const app = require('express')()
-const axios = require('axios')
+const express = require('express')
+const app = express()
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
 const clients = {
-  's6BhdRkqt3': { // client_id
+  s6BhdRkqt3: { // client_id
     client_secret: 'asdfnaspf',
     redirect_uri: 'http://localhost.io:5001/connection/oauth2callback',
     scope: 'read',
-    basicAuthHeader: Buffer.from('s6BhdRkqt3:asdfnaspf').toString('base64'),
-    authSessions: {} // 
+    basicAuthHeader: Buffer.from('s6BhdRkqt3:asdfnaspf').toString('base64')
   }
 }
 
-function generateAuthCode () {
+function generateAuthCode (client_id) {
   // generates random alphanumeric string
-  return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)
+  clients[client_id].code = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)
+  return clients[client_id].code
 }
-
 
 app.get('/authorize', (req, res) => {
   /// authorize?response_type=code&client_id=s6BhdRkqt3&state=xyz& redirect_uri=https % 3A % 2F % 2Fclient % 2Eexample % 2Ecom % 2Fc
@@ -25,19 +27,23 @@ app.get('/authorize', (req, res) => {
       return res.status(400).send('invalid_client')
     }
     // if client[]
-    return res.redirect(redirect_uri + '?code=mycode&state=' + state)
+    return res.redirect(redirect_uri + '?code=' + generateAuthCode(client_id) + '&state=' + state)
   }
   res.status(400).send('Bad Request')
 })
 
 app.post('/token', (req, res) => {
-  if (req.query.code !== 'mycode') return res.status(400).send('Bad authorization code')
+  if (req.body?.code !== clients[req.body.client_id].code) return res.status(400).send('Bad authorization code')
+  delete req.body.code
   res.json({
-    "access_token": "2YotnFZFEjr1zCsicMWpAA",
-    "token_type": "example",
-    "expires_in": 3600,
-    "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
-    "example_parameter": "example_value"
+    data: {
+      access_token: '2YotnFZFEjr1zCsicMWpAA'
+    },
+    access_token: '2YotnFZFEjr1zCsicMWpAA',
+    token_type: 'example',
+    expires_in: 3600,
+    refresh_token: 'tGzv3JOkF0XG5Qx2TlKWIA',
+    example_parameter: 'example_value'
   })
 })
 
