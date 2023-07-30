@@ -26,6 +26,7 @@ function generateAuthCode (clientId) {
 function generateAccessTokenFromRefreshToken (client) {
   client.access_token = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)
   client.access_token_expiration = Date.now() + accessTokenLifeTime * 1000 // 3 seconds
+  console.log('access_token: ' + client.access_token)
   return {
     access_token: client.access_token,
     expires_in: accessTokenLifeTime
@@ -38,6 +39,8 @@ function generateAccessTokenFromAuthCode (client) {
   client.access_token_expiration = Date.now() + accessTokenLifeTime * 1000
   client.refresh_token_expiration = client.access_token_expiration + refreshTokenLifeTime * 1000
 
+  console.log('access_token: ' + client.access_token)
+  console.log('refresh_token: ' + client.refresh_token)
   return {
     access_token: client.access_token,
     refresh_token: client.refresh_token,
@@ -137,12 +140,21 @@ app.get('/ping', (req, res) => {
 })
 
 app.get('/dummy', (req, res) => {
-  console.log('/dummy')
+  console.log('get /dummy')
   if (!isValidToken(req.headers.authorization)) {
     return res.status(401).send('Access token expired/invalid')
   }
 
   res.json({ message: 'dummy', randomShit: Math.floor(Math.random() * 100) })
+})
+
+app.post('/dummy', (req, res) => {
+  console.log('post /dummy')
+  if (!isValidToken(req.headers.authorization)) {
+    return res.status(401).send('Access token expired/invalid')
+  }
+
+  res.json({ message: 'post dummy', randomShit: Math.floor(Math.random() * 100) })
 })
 
 app.get('/401', (_req, res) => res.status(401).send('Unauthorized'))
